@@ -1,0 +1,25 @@
+### 🌐 Variáveis globais
+@baseUrl = http://localhost:3000
+
+### 🧩 Registrar novo usuário
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "lucas4@teste.com",
+  "password": "123456"
+}
+
+### 🔐 Fazer login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "lucas4@teste.com",
+  "password": "123456"
+}
+
+### 🧱 Acessar rota protegida (colar o token manualmente)
+GET {{baseUrl}}/secure/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzNEB0ZXN0ZS5jb20iLCJpYXQiOjE3NjEwMDU1MDgsImV4cCI6MTc2MTAwOTEwOH0.r4hfkFNdQb15Kd-krtYGAoDpn_cdF9WTYx9dUjuYsr0
+

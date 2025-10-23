@@ -1,19 +1,17 @@
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-
-dotenv.config();
+import jwt from 'jsonwebtoken';
 
 export function verifyToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "Token ausente" });
+  const header = req.headers.authorization || '';
+  const [type, token] = header.split(' ');
 
-  const token = authHeader.split(" ")[1];
+  if (type !== 'Bearer' || !token)
+    return res.status(401).json({ error: 'Token ausente ou inválido.' });
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    next(); // prossegue pra rota protegida
-  } catch (err) {
-    res.status(403).json({ message: "Token inválido ou expirado" });
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Token inválido ou expirado.' });
   }
 }

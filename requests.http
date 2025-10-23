@@ -1,25 +1,56 @@
-### 🌐 Variáveis globais
-@baseUrl = http://localhost:3000
+### Health
+GET http://localhost:3000/health
 
-### 🧩 Registrar novo usuário
-POST {{baseUrl}}/auth/register
+### Rota inexistente (deve retornar 404 padronizado)
+GET http://localhost:3000/nao-existe
+
+### Teste registro com email inválido
+POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "email": "lucas4@teste.com",
-  "password": "123456"
+  "email": "nao-e-um-email",
+  "password": "123"
 }
 
-### 🔐 Fazer login
-POST {{baseUrl}}/auth/login
+### Teste login sem senha
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "lucas4@teste.com",
-  "password": "123456"
+  "email": "user@flowsync.dev"
 }
 
-### 🧱 Acessar rota protegida (colar o token manualmente)
-GET {{baseUrl}}/secure/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzNEB0ZXN0ZS5jb20iLCJpYXQiOjE3NjEwMDU1MDgsImV4cCI6MTc2MTAwOTEwOH0.r4hfkFNdQb15Kd-krtYGAoDpn_cdF9WTYx9dUjuYsr0
 
+### Registro (ajuste o e-mail para evitar P2002)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "dev{{Date.now}}@flowsync.dev",
+  "password": "12345678",
+  "name": "Dev Test"
+}
+
+### Login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "dev@flowsync.dev",
+  "password": "12345678"
+}
+
+### Secure profile (cole o token)
+GET http://localhost:3000/secure/profile
+Authorization: Bearer {{token}}
+
+
+### Teste de bloqueio de login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "naoexiste@flowsync.dev",
+  "password": "123456"
+}

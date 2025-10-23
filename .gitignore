@@ -1,0 +1,5 @@
+
+/src/generated/prisma
+
+# Ignorar documentação local
+/docs

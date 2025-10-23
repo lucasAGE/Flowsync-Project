@@ -1,46 +1,65 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import prisma from '../prisma/client.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-dotenv.config();
+const SALT_ROUNDS = 10;
 
-const users = []; // simulação de banco em memória (vamos trocar por Prisma depois)
+export const register = async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
 
-export async function register(req, res) {
-  const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
 
-  if (!email || !password)
-    return res.status(400).json({ message: "E-mail e senha obrigatórios" });
+    // Verifica se já existe
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing)
+      return res.status(400).json({ error: 'E-mail já registrado.' });
 
-  const existing = users.find((u) => u.email === email);
-  if (existing)
-    return res.status(400).json({ message: "Usuário já registrado." });
+    // Criptografa a senha
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = { email, password: hashed };
-  users.push(user);
+    // Cria o usuário no banco
+    const user = await prisma.user.create({
+      data: { email, password: hash },
+      select: { id: true, email: true, createdAt: true }
+    });
 
-  console.log("Novo usuário:", email, "Senha criptografada:", hashed);
-  res.status(201).json({ message: "Usuário registrado com sucesso!" });
-}
+    return res.status(201).json({ message: 'Usuário criado com sucesso.', user });
+  } catch (err) {
+    next(err);
+  }
+};
 
-export async function login(req, res) {
-  const { email, password } = req.body;
+// trecho do login no auth.controller.js
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password)
+      return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
 
-  if (!email || !password)
-    return res.status(400).json({ message: "E-mail e senha obrigatórios" });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      console.warn(`🚫 Tentativa de login falhou — email inexistente: ${email}`);
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
 
-  const user = users.find((u) => u.email === email);
-  if (!user)
-    return res.status(401).json({ message: "Usuário não encontrado." });
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      console.warn(`🚫 Senha incorreta para o usuário: ${email}`);
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid)
-    return res.status(401).json({ message: "Senha incorreta." });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
-  const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+    console.log(`✅ Login bem-sucedido: ${email}`);
 
-  res.json({ message: "Login realizado com sucesso!", token });
-}
+    return res.status(200).json({ token, user: { id: user.id, email: user.email } });
+  } catch (err) {
+    next(err);
+  }
+};
